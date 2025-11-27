@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bubble Sort Visualizer — Dark Theme</title>
+<style>
+  :root{
+    --bg1: #0f1724;
+    --bg2: #061026;
+    --card:#0b1220;
+    --glass: rgba(255,255,255,0.04);
+    --muted: rgba(255,255,255,0.6);
+    --accent: linear-gradient(135deg,#7dd3fc,#60a5fa);
+    --ok: #34d399;
+    --danger: #fb7185;
+    --pill: rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 800px at 10% 10%, rgba(96,165,250,0.06), transparent 8%),
+                radial-gradient(900px 600px at 90% 90%, rgba(125,211,252,0.04), transparent 12%),
+                linear-gradient(180deg,var(--bg1),var(--bg2));
+    color: #e6eef8;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+  }
+
+  .panel{
+    width:980px;
+    max-width:96%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:14px;
+    padding:20px;
+    box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    border: 1px solid rgba(255,255,255,0.03);
+  }
+
+  header { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+  h1{ font-size:18px; margin:0; letter-spacing:0.2px; }
+  p.sub{ margin:0; color:var(--muted); font-size:13px; }
+
+  .main{
+    display:grid;
+    grid-template-columns: 1fr 340px;
+    gap:16px;
+    align-items:start;
+  }
+
+  /* Visual area */
+  .visual{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:10px;
+    padding:16px;
+    min-height:220px;
+  }
+  .array {
+    display:flex;
+    gap:12px;
+    align-items:end;
+    justify-content:flex-start;
+    padding:20px 6px;
+    min-height:120px;
+  }
+  .cell{
+    width:70px;
+    height:70px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:20px;
+    color:#081126;
+    transition: transform 420ms cubic-bezier(.2,.9,.2,1), background 320ms, box-shadow 320ms;
+    user-select:none;
+    position:relative;
+  }
+
+  /* value colors (so same value keeps same color) */
+  .v-1{ background: linear-gradient(180deg,#9be89b,#7bd77b); color:#021703;}
+  .v-2{ background: linear-gradient(180deg,#ffd166,#ffb94a); color:#2a1500;}
+  .v-3{ background: linear-gradient(180deg,#ff9f9f,#ff6b6b); color:#2b0404;}
+  .v-4{ background: linear-gradient(180deg,#6bc5ff,#2ea1ff); color:#03283a;}
+  .v-5{ background: linear-gradient(180deg,#c7b3ff,#9476ff); color:#12002a;}
+  .v-large{ background: linear-gradient(180deg,#6ee7b7,#34d399); color:#042513; }
+
+  .cell.comparing { transform: translateY(-8px) scale(1.06); box-shadow: 0 12px 30px rgba(21,94,255,0.16); outline: 3px solid rgba(125,211,252,0.12); }
+  .cell.comparing-right { transform: translateY(-8px) scale(1.06); box-shadow: 0 12px 30px rgba(52,211,153,0.12); outline: 3px dashed rgba(52,211,153,0.08); }
+  .cell.settled { filter: saturate(0.85) brightness(0.98); opacity:0.92; box-shadow:none; transform:none; }
+
+  .legend{ display:flex; gap:10px; margin-top:6px; color:var(--muted); font-size:13px; align-items:center; flex-wrap:wrap; }
+  .legend .item{ display:flex; gap:8px; align-items:center; background:var(--pill); padding:6px 8px; border-radius:999px; }
+
+  /* controls */
+  .controls {
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    padding:12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .controls .row { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+  button.btn {
+    background: linear-gradient(180deg,#1f2937,#111827);
+    color:#e6eef8;
+    border:none; padding:10px 14px; border-radius:10px; cursor:pointer;
+    font-weight:700; letter-spacing:0.2px;
+    box-shadow: 0 6px 16px rgba(2,6,23,0.6);
+  }
+  button.btn.secondary {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.05);
+    color:var(--muted);
+    font-weight:600;
+  }
+  input[type="range"]{ width:160px; }
+  input[type="text"]{
+    padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--muted);
+    min-width:160px;
+  }
+
+  .meta { font-size:13px; color:var(--muted); margin-top:6px; }
+
+  footer { margin-top:14px; display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
+
+  /* small screens */
+  @media (max-width:920px){
+    .main{ grid-template-columns: 1fr; }
+    .array{ justify-content:center; flex-wrap:wrap; gap:10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="panel" role="application">
+    <header>
+      <div>
+        <h1>Bubble Sort Visualizer — Dark Interactive</h1>
+        <p class="sub">Color-coded values. Press Play to watch bubble-sort bubble values to their places.</p>
+      </div>
+    </header>
+
+    <div class="main">
+      <!-- left: visualization -->
+      <div class="visual">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-weight:700">Array</div>
+          <div style="font-size:13px; color:var(--muted)">Comparisons are highlighted</div>
+        </div>
+
+        <div id="array" class="array" aria-live="polite" aria-label="Bubble sort visualization"></div>
+
+        <div class="legend" id="legend">
+          <div class="item"><div style="width:12px;height:12px;background:linear-gradient(180deg,#ffd166,#ffb94a);border-radius:4px"></div>Value colors track items</div>
+          <div class="item"><div style="width:12px;height:12px;background:rgba(255,255,255,0.06);border-radius:4px"></div>Settled / final</div>
+        </div>
+
+        <div class="meta" id="status">Status: Ready — enter array or press Play.</div>
+      </div>
+
+      <!-- right: controls -->
+      <aside class="controls">
+        <div class="row">
+          <button id="start" class="btn">Play</button>
+          <button id="step" class="btn secondary">Step</button>
+          <button id="reset" class="btn secondary">Reset</button>
+        </div>
+
+        <div class="row">
+          <label style="color:var(--muted); font-size:13px;">Speed</label>
+          <input id="speed" type="range" min="100" max="1200" value="500" />
+          <span id="speedVal" style="color:var(--muted); font-weight:700; min-width:40px;">500ms</span>
+        </div>
+
+        <div class="row">
+          <label style="color:var(--muted);font-size:13px;">Custom array</label>
+          <input id="arrayInput" type="text" placeholder="e.g. 5,2,4,1 or 10 3 7" />
+          <button id="load" class="btn secondary">Load</button>
+        </div>
+
+        <div class="row">
+          <div style="font-size:13px;color:var(--muted);">Legend: <span style="color:#9be89b;">green-ish = small</span>, <span style="color:#ffd166;">yellow = medium</span>, <span style="color:#6bc5ff;">blue = large</span></div>
+        </div>
+
+        <footer>
+          <div style="font-size:12px;color:var(--muted)">Pass: <span id="passIndex">0</span></div>
+          <div style="font-size:12px;color:var(--muted)">Comparing index: <span id="compareIndex">-</span></div>
+        </footer>
+      </aside>
+    </div>
+  </div>
+
+<script>
+/* --------- Bubble sort visualizer logic ---------- */
+const initialValues = [5,2,4,1]; // default array
+let a = initialValues.slice();
+const arrayEl = document.getElementById('array');
+const statusEl = document.getElementById('status');
+const passEl = document.getElementById('passIndex');
+const compareEl = document.getElementById('compareIndex');
+
+let i = 0, j = 0;
+let running = false, timer = null;
+
+function valueToClass(v){
+  // Map numeric value to a consistent class (v-1..v-5, fallback v-large)
+  if (v <= 0) return 'v-1';
+  if (v <= 1) return 'v-1';
+  if (v <= 2) return 'v-2';
+  if (v <= 3) return 'v-3';
+  if (v <= 4) return 'v-4';
+  if (v <= 6) return 'v-5';
+  return 'v-large';
+}
+
+function render(highlight={}){
+  arrayEl.innerHTML = '';
+  a.forEach((v, idx) => {
+    const d = document.createElement('div');
+    d.className = 'cell ' + valueToClass(v);
+    d.textContent = v;
+    if (highlight.left === idx) d.classList.add('comparing');
+    if (highlight.right === idx) d.classList.add('comparing-right');
+    if (highlight.settled && idx >= a.length - highlight.settled) d.classList.add('settled');
+    arrayEl.appendChild(d);
+  });
+}
+
+function resetState(arr){
+  a = arr.slice();
+  i = 0; j = 0;
+  stop();
+  render();
+  statusEl.textContent = 'Status: Ready — array loaded';
+  passEl.textContent = '0';
+  compareEl.textContent = '-';
+}
+
+function nextStep(){
+  if (i >= a.length - 1) {
+    statusEl.textContent = 'Finished: array sorted';
+    render({settled: a.length});
+    stop();
+    return;
+  }
+  // show comparing
+  render({left: j, right: j+1, settled: i});
+  statusEl.textContent = `Pass ${i+1}: comparing indexes ${j} & ${j+1}`;
+  passEl.textContent = (i+1).toString();
+  compareEl.textContent = `${j} & ${j+1}`;
+
+  // if out of bounds (edge) just advance
+  if (j >= a.length - 1 - i) {
+    j = 0; i++;
+    render({settled: i});
+    return;
+  }
+
+  // perform swap if needed
+  if (a[j] > a[j+1]) {
+    // visually animate swap by swapping array and re-render
+    const tmp = a[j]; a[j] = a[j+1]; a[j+1] = tmp;
+    // small delay to let users see comparison highlight
+    setTimeout(()=> {
+      render({left: j, right: j+1, settled: i});
+    }, Math.max(80, parseInt(speed.value) / 6));
+  }
+
+  j++;
+  // if we finished the inner loop, mark settled and move to next pass
+  if (j >= a.length - i - 1) {
+    render({settled: i+1});
+    j = 0;
+    i++;
+  }
+}
+
+/* controls */
+const startBtn = document.getElementById('start');
+const stepBtn = document.getElementById('step');
+const resetBtn = document.getElementById('reset');
+const speed = document.getElementById('speed');
+const speedVal = document.getElementById('speedVal');
+const arrInput = document.getElementById('arrayInput');
+const loadBtn = document.getElementById('load');
+
+speed.addEventListener('input', ()=> speedVal.textContent = speed.value + 'ms');
+
+function step(){
+  nextStep();
+}
+
+function start(){
+  if (running) return;
+  running = true;
+  startBtn.textContent = 'Pause';
+  timer = setInterval(()=>{
+    nextStep();
+    if (i >= a.length - 1) stop();
+  }, Math.max(80, parseInt(speed.value)));
+}
+
+function stop(){
+  running = false;
+  startBtn.textContent = 'Play';
+  if (timer) { clearInterval(timer); timer = null; }
+}
+
+function reset(){
+  resetState(initialValues);
+}
+
+startBtn.addEventListener('click', ()=>{
+  if (running) stop(); else start();
+});
+
+stepBtn.addEventListener('click', ()=> { step(); });
+
+resetBtn.addEventListener('click', ()=> { reset(); });
+
+loadBtn.addEventListener('click', ()=> {
+  const txt = arrInput.value.trim();
+  if (!txt) { statusEl.textContent = 'Enter values like "5,2,4,1" or "8 3 9"'; return; }
+  const nums = txt.split(/[\s,]+/).map(x => parseFloat(x)).filter(x => !Number.isNaN(x));
+  if (nums.length < 2) { statusEl.textContent = 'Need at least two numbers.'; return; }
+  // store as integers where appropriate
+  for(let k=0;k<nums.length;k++) nums[k] = Math.round(nums[k]);
+  resetState(nums);
+});
+
+window.addEventListener('load', ()=> {
+  resetState(initialValues);
+});
+</script>
+</body>
+</html>
